@@ -1,0 +1,48 @@
+---
+- name: download tar.gz
+  get_url:
+    headers: Cookie:oraclelicense=accept-securebackup-cookie
+    url: "{{ java_oracle_tgz_url }}"
+    dest: /tmp/{{ java_oracle_tgz }}
+    mode: 0644
+  register: download_oracle_jdk
+- debug: var=download_oracle_jdk
+
+- name: unarchive oracle-jdk
+  unarchive:
+    remote_src: yes
+    src: /tmp/{{ java_oracle_tgz }}
+    dest: "{{ java_oracle_parent_install_dir }}"
+    creates: "{{ java_oracle_install_dir }}"
+  register: unarchive_oracle-jdk
+- debug: var=unarchive_oracle-jdk
+
+- name: link oracle-jdk
+  file:
+    src: "{{ java_oracle_install_dir }}"
+    dest: "{{ java_oracle_link_dir }}"
+    state: link
+  register: link_oracle-jdk
+- debug: var=link_oracle-jdk
+
+- name: add to path and ese systemd
+  with_items:
+    - f: java-oracle.sh
+      d: /etc/profile.d
+    - f: java-oracle.env
+      d: "{{ java_oracle_install_dir }}"
+  template:
+    src: '{{ item.f }}.j2'
+    dest: '{{ item.d }}/{{ item.f }}'
+    mode: '{{ item.m|default("0644") }}'
+  register: add_to_systemd
+- debug: var=add_to_systemd
+
+- name: cleanup oracle-jdk
+  #when: java_oracle_cleanup
+  file:
+    follow: yes
+    path: /tmp/{{ java_oracle_tgz }}
+    state: absent
+  register: cleanup_oracle-jdk
+- debug: var=cleanup_oracle-jdk

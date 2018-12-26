@@ -1,0 +1,6 @@
+---
+- name: install Oracle-JDK and configure
+  become: yes
+  hosts: tag_Env_web
+  roles:
+    - oracle-jdk

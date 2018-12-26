@@ -1,0 +1,14 @@
+---
+# handlers file for mariadb
+- name: Restart mariadb
+  become: yes
+  systemd:
+    name: mariadb.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  register: retart_mariadb
+  tags:
+    - mariadb
+- debug: var=restart_mariadb
+  

@@ -1,0 +1,201 @@
+---
+# Linux Configurations
+
+- name: add management group
+  group: name={{ item.group }} gid={{ item.groupnum }}
+  with_items:
+    - { group: "ansible", groupnum: "9000" }
+  register: add_mgmtgroup
+- debug: var=add_mgmtgroup
+
+- name: add managed user
+  user: name={{ item.name }} state=present password={{ item.password | password_hash('sha512') }} group={{ item.group }} groups={{ item.groups }} uid={{ item.uid }}
+  with_items:
+    - { name: "ansible",  password: "ansible", group: "ansible", groups: "wheel", uid: "9000" }
+  changed_when: false
+  register: add_mgmtuser
+- debug: var=add_mgmtuser
+
+- name: modify permission ~/.ssh for managed user
+  file: path="/home/{{ item.name }}/.ssh" state=directory owner={{ item.name }} group={{ item.name }} mode=0700
+  with_items:
+    - { name: "ansible" }
+  register: mod_permission_.ssh
+- debug: var=mod_permission_.ssh
+
+- name: authorized keys deployed
+  copy: src="authorized_keys_for_{{ item.name }}" dest="/home/{{ item.name }}/.ssh/authorized_keys" owner={{ item.name }} group={{ item.name }} mode=0600
+  with_items:
+    - { name: "ansible" }
+  register: dep_auth_keys
+- debug: var=dep_auth_keys
+
+- name: sudo configured
+  copy: src="../files/sudoers" dest="/etc/sudoers" owner=root group=root mode=0440
+  register: cp_sudoers
+- debug: var=cp_sudoers
+
+- name: change for root password
+  user: name={{ item.name }} password={{ item.password | password_hash('sha512') }}
+  with_items:
+    - { name: "root", password: "mspfrf2001" }
+  changed_when: false
+  register: ch_rootpw
+- debug: var=ch_rootpw
+
+- name: set hostname
+  hostname: name={{ inventory_hostname }}
+  register: set_hostname
+- debug: var=set_hostname
+
+- name: generate /etc/hosts file
+  template:
+    src: ../templates/hosts.j2
+    dest: /etc/hosts
+  register: gen_hosts
+- debug: var=gen_hosts
+
+- name: set hostname (modify /etc/cloud/cloud.cfg)
+  lineinfile: dest=/etc/cloud/cloud.cfg line="preserve_hostname{{ ":" }} true"
+  register: mod_cloud_cfg
+- debug: var=mod_cloud_cfg
+
+- name: set hostname (modify /etc/sysconfig/network)
+  lineinfile: dest=/etc/sysconfig/network line="NETWORKING_IPV6=no"
+  register: mod_sysnetwork_IPV6
+- debug: var=mod_sysnetwork_IPV6
+  
+- name: set hostname (modify /etc/sysconfig/network)
+  lineinfile: dest=/etc/sysconfig/network line="HOSTNAME={{ inventory_hostname }}"
+  register: mod_sysnetwork_HOSTNAME
+- debug: var=mod_sysnetwork_HOSTNAME
+
+- name: disabled unnecessary services
+  service: name={{ item.services }} state=stopped enabled=no
+  with_items:
+    - { services: "postfix" }
+  register: dis_unnec_services
+- debug: var=dis_unnec_services
+
+- name: add typical group
+  group: name={{ item.group }} gid={{ item.groupnum }}
+  with_items:
+    - { group: "test", groupnum: "10001" }
+  register: add_typgroup
+- debug: var=add_typgroup
+
+- name: add typical user
+  user: name={{ item.name }} state=present password={{ item.password | password_hash('sha512') }} group={{ item.group }} uid={{ item.uid }}
+  with_items:
+    - { name: "testuser01",  password: "testtest", group: "test", uid: "10001" }
+  changed_when: false
+  register: add_typuser
+- debug: var=add_typuser
+
+- name: install libselinux-python
+  yum: name=libselinux-python state=present
+  register: yum_libselinux-python
+- debug: var=yum_libselinux-python
+  
+- name: disabled SELinux
+  selinux: policy=targeted state=permissive
+  register: dis_SELinux
+- debug: var=dis_SELinux
+
+- name: modify sshd_config AddressFamily
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    state=present
+    regexp='^#AddressFamily any'
+    line='AddressFamily inet'
+    backup=yes
+  changed_when: false
+  register: mod_sshd_config_inet
+- debug: var=mod_sshd_config_inet
+
+- name: modify sshd_config PermitRootLogin
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    state=present
+    regexp='^#PermitRootLogin yes'
+    line='PermitRootLogin no'
+  changed_when: false
+  register: mod_sshd_config_PermitRootLogin 
+- debug: var=mod_sshd_config_PermitRootLogin
+
+- name: modify sshd_config UseDNS
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    state=present
+    regexp='^#UseDNS yes'
+    line='UseDNS no'
+  changed_when: false
+  register: mod_sshd_config_UseDNS
+- debug: var=mod_sshd_config_UseDNS
+
+- name: modify sshd_config AllowUsers
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    line='AllowUsers {{ item.allowusers }}' 
+  with_items:
+    - { allowusers: "centos" }
+    - { allowusers: "ansible" }
+    - { allowusers: "testuser01" } 
+  register: mod_sshd_config_AllowUsers
+  notify: restart sshd
+- debug: var=mod_sshd_config_AllowUsers
+
+- name: modify chrony.conf commentout_servers
+  replace:
+    dest=/etc/chrony.conf
+    regexp='^(server \d+.centos.pool.ntp.org iburst)'
+    replace='# \1'
+  register: mod_chrony_conf_comentout_servers
+- debug: var=mod_chrony_conf_commentout_servers
+
+- name: modify chrony.conf add_servers
+  blockinfile:
+    dest: /etc/chrony.conf
+    state: present
+    content: |
+    
+      # ntp servers
+      server 172.16.199.11 iburst
+
+  register: mod_chrony_conf_add_servers
+  notify: restart chronyd
+- debug: var=mod_chrony_conf_add_servers
+
+- name: set timezone to Asia/Tokyo
+  timezone:
+    name: Asia/Tokyo
+  register: set_timezone
+- debug: var=set_timezone
+
+- name: set locale to ja_JP.UTF-8
+  command: localectl set-locale LANG=ja_JP.UTF-8
+  changed_when: false
+  register: set_locale
+- debug: var=set_locale
+
+- name: set keymaps to jp106
+  command: localectl set-keymap jp106
+  changed_when: false
+  register: set_keymap
+- debug: var=set_keymap
+
+- name: modify /etc/yum/conf exclude kernel*
+  lineinfile:
+    dest=/etc/yum.conf
+    line='exclude=kernel*'
+  register: mod_yum_conf
+- debug: var=mod_yum_conf
+
+- name: yum update
+  yum:
+#    name: '*'
+    name: binutils
+    state: latest
+#    exclude: kernel*
+  register: yum_update
+- debug: var=yum_update

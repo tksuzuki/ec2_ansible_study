@@ -1,0 +1,31 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    ec2_region: "us-west-2"
+    ec2_zone: "us-west-2a"
+    ec2_exact_count: 1
+    ec2_name: web01
+    ec2_instance_type: t2.micro
+    ec2_key_name: ans_key01
+    ec2_group: Ans_Web
+    ec2_instance_tag_env: web
+    ec2_instance_tag_owner: J32704
+    ec2_ebs_optimized: false
+    ec2_monitoring: no
+    ec2_volumes_device_name: "/dev/sda1"
+    ec2_volumes_volume_type: gp2
+    ec2_volumes_volume_size: 30
+    ec2_volumes_delete_on_termination: true
+    ec2_vpc_subnet_id: "ans_private_suba"
+    ec2_assign_public_ip: no
+    ec2_private_ip: "172.16.199.21"
+    ec2_placement_group:
+    ec2_source_dest_check: yes
+    ec2_spot_launch_group: no
+    ec2_tenancy: default
+    ec2_termination_protection: no
+    ec2_validate_certs: yes
+    ec2_wait: yes
+  roles:
+    - { role: ec2, tags: [ec2] }

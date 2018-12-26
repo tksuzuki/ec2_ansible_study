@@ -1,0 +1,10 @@
+# roles/mariadb/vars/main.yml
+---
+mariadb_packages:
+  - MariaDB
+  - MariaDB-server
+  - MySQL-python
+
+mariadb_version: 10.3.2
+mariadb_distribution: centos73
+mariadb_service: mariadb

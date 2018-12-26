@@ -1,0 +1,10 @@
+---
+- include: deploy_db01.yml
+- include: deploy_db02.yml
+- include: deploy_web01.yml
+- include: deploy_web02.yml
+- include: deploy_web03.yml
+- include: deploy_web04.yml
+- include: ans_local.yml
+- include: ans_web.yml
+- include: ans_db.yml

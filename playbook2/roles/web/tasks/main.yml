@@ -1,0 +1,3 @@
+---
+# tasks file for web
+- include: httpd_installed.yml

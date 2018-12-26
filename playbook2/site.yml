@@ -1,0 +1,5 @@
+---
+- include: dbservers.yml
+- include: oracle-jdk.yml
+- include: ap.yml
+- include: webservers.yml

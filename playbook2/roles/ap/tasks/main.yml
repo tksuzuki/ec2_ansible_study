@@ -1,0 +1,9 @@
+---
+# tasks file for ap
+
+- include: roles/ap/tasks/install.yml
+- include: roles/ap/tasks/configure.yml
+- include: roles/ap/tasks/users.yml
+
+- include: roles/ap/tasks/ssl.yml
+  when: wildfly_enable_ssl

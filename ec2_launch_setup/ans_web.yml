@@ -1,0 +1,6 @@
+---
+- hosts: web01 web02 web03 web04
+  remote_user: centos
+  become: yes
+  roles:
+    - common

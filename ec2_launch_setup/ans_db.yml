@@ -1,0 +1,6 @@
+---
+- hosts: db01 db02
+  remote_user: centos
+  become: yes
+  roles:
+    - common

@@ -1,0 +1,74 @@
+---
+
+- name: Create root user password
+  shell: tr -dc '[:alnum:]' < /dev/urandom 2>/dev/null | head -c 16
+  register: mysql_root_password
+  failed_when: no
+  changed_when: mysql_root_password.rc !=0
+  tags:
+    - mariadb
+- debug: var=mysql_root_password
+
+- name: Execute mysql_secure_installation
+  script: secure_install.sh {{ mysql_root_password.stdout | quote }}
+  register: mysql_secure_installation
+  tags:
+    - mariadb
+- debug: var=mysql_secure_installation
+
+- name: Add Line for include append config file
+  lineinfile: >
+    dest=/etc/my.cnf
+    line="!includedir /etc/my.cnf.d"
+    backup=yes
+  register: included_mariadb_config_file
+  tags:
+    - mariadb
+- debug: var=included_mariadb_config_file
+
+- name: Copy login.cnf to /etc/my.cnf.d/login.cnf
+  template: >
+    src=login.cnf.j2
+    dest=/etc/my.cnf.d/login.cnf
+    owner=root
+    group=root
+    mode=0600
+  register: cp_logincnf
+  tags:
+    - mariadb
+- debug: var=cp_logincnf
+
+- name: Copy mysql-clients.cnf to /etc/my.cnf.d/mysql-clients.cnf
+  template: >
+    src=mysql-clients.cnf.j2
+    dest=/etc/my.cnf.d/mysql-clients.cnf
+    owner=root
+    group=root
+    mode=0644
+  register: cp_mysql-clientcnf
+  tags:
+    - mariadb
+- debug: var=cp_mysql-clientcnf
+
+- name: Copy server.cnf to /etc/my.cnf.d/server.cnf
+  template: >
+    src=server.cnf.j2
+    dest=/etc/my.cnf.d/server.cnf
+    owner=root
+    group=root
+    mode=0644
+  register: cp_servercnf
+  tags:
+    - mariadb
+- debug: var=cp_servercnf
+
+- name: Startup mariadb
+  systemd: 
+    name: mariadb.service
+    state: restarted
+    daemon_reload: yes
+    enabled: yes
+  register: startup_mariadb
+  tags:
+    - mariadb
+- debug: var=startup_mariadb

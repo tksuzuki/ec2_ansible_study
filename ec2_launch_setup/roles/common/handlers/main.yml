@@ -1,0 +1,6 @@
+---
+- name: restart sshd
+  action: service name=sshd state=restarted
+
+- name: restart chronyd
+  action: service name=chronyd state=restarted

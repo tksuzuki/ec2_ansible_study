@@ -1,0 +1,97 @@
+---
+# task file for wildfly
+
+- name: Create wildfly etc directory
+  file:
+    path: '{{ wildfly_conf_dir }}'
+    state: directory
+    owner: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    mode: '0750'
+
+- name: Copy wildfly configuration
+  template:
+    src: wildfly.conf.j2
+    dest: '{{ wildfly_conf_dir }}/wildfly.conf'
+    owner: root
+    group: root
+    mode: '0640'
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Create symlink to /etc/default/wildfly.conf
+  file:
+    state: link
+    src: '{{ wildfly_conf_dir }}/wildfly.conf'
+    dest: /etc/default/wildfly.conf
+
+- include: configure-properties.yml
+
+- name: Create symlink to upstream init script
+  file:
+    state: link
+    src: '{{ wildfly_install_dir }}/wildfly/{{ wildfly_init_src_path }}/init.d/wildfly-init-{{ ansible_os_family | lower }}.sh'
+    dest: '{{ wildfly_init_dir }}/wildfly'
+  when: ansible_service_mgr in ['init', 'upstart']
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- name: Copy wildfly systemd unit file
+  template: src=wildfly.service.j2 dest={{ wildfly_systemd_dir }}/wildfly.service owner=root
+            group=root mode=0640
+  when: ansible_service_mgr == 'systemd'
+  notify:
+    - restart wildfly
+    - change standalone data mode
+
+- block:
+  - name: Open wildfly management http tcp port
+    firewalld:
+      port: '{{ wildfly_manage_http_port }}/tcp'
+      permanent: yes
+      immediate: yes
+      state: enabled
+
+  - name: Open wildfly management https tcp port
+    firewalld:
+      port: '{{ wildfly_manage_https_port }}/tcp'
+      permanent: yes
+      immediate: yes
+      state: enabled
+
+  - name: Open wildfly http tcp port
+    firewalld:
+      port: '{{ wildfly_http_port }}/tcp'
+      permanent: yes
+      immediate: yes
+      state: enabled
+
+  - name: Open wildfly https tcp port
+    firewalld:
+      port: '{{ wildfly_https_port }}/tcp'
+      permanent: yes
+      immediate: yes
+      state: enabled
+  when: ansible_distribution_version|version_compare(7, '=') and wildfly_manage_firewall
+
+- meta: flush_handlers
+
+- block:
+    - name: Enable and start the service
+      service:
+        name: wildfly
+        state: started
+        enabled: yes
+    - name: Wait for wildfly to start
+      wait_for:
+        path: "{{ wildfly_dir }}/standalone/log/server.log"
+        search_regex: 'started in'
+  when: wildfly_manage_service
+
+- name: Delete wildfly tar file
+  file:
+    path: '{{ wildfly_download_dir }}/{{ wildfly_download_file }}'
+    state: absent
+  when: wildfly_remove_download_file

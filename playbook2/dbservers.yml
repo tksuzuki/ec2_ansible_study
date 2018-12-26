@@ -1,0 +1,6 @@
+---
+- name: install MariaDB and configure
+  become: yes
+  hosts: tag_Env_db
+  roles:
+    - mariadb

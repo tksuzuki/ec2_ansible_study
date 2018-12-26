@@ -1,0 +1,19 @@
+---
+# defaults file for oracle-jdk
+
+# jre or jdk
+java_oracle_prefix: jdk
+
+java_oracle_ver: 8
+java_oracle_minor_ver: 0
+java_oracle_patch_ver: 151
+java_oracle_post_patch_ver: b12
+
+java_oracle_uuid: e758a0de34e24606bca991d704f6dcbf
+java_oracle_platform: linux-x64
+java_oracle_mirror: http://download.oracle.com/otn-pub/java/jdk
+
+java_oracle_parent_install_dir: /usr/local
+
+java_oracle_cleanup: False
+

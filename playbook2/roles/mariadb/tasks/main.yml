@@ -1,0 +1,6 @@
+---
+# tasks file for mariadb
+- include: mariadb_installed.yml
+- include: mysql_secure_installation.yml
+- include: mariadb_create_databases.yml
+- include: mariadb_create_users.yml

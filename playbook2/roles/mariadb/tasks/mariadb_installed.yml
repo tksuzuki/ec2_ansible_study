@@ -1,0 +1,33 @@
+---
+- name: Add MariaDB repository
+  yum_repository:
+    name: MariaDB
+    description: MariaDB
+    baseurl: "http://yum.mariadb.org/{{ mariadb_version }}/{{ mariadb_distribution }}-amd64"
+    gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+    gpgcheck: yes
+  register: add_mariadb_repository
+  tags:
+    - mariadb
+- debug: var=add_mariadb_repository
+
+- name: Installed mariadb
+  package:
+    name: "{{ item }}"
+    state: installed
+  with_items: "{{ mariadb_packages }}"
+  register: installed_mariadb
+  tags:
+    - mariadb
+- debug: var=installed_mariadb
+
+- name: Running and enabled mariadb
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: yes
+  with_items: "{{ mariadb_service }}"
+  register: systemd_run_ena_mariadb
+  tags:
+    - mariadb
+- debug: var=systemd_run_ena_mariadb

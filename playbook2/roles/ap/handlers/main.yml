@@ -1,0 +1,19 @@
+---
+# handlers file for ap
+
+
+- name: restart wildfly
+  service:
+    name: wildfly
+    state: restarted
+
+- name: change standalone data mode
+  file:
+    path: '{{ wildfly_dir }}/standalone/data'
+    owner: '{{ wildfly_user }}'
+    group: '{{ wildfly_group }}'
+    mode: '0750'
+    recurse: yes
+    state: directory
+  when: wildfly_manage_standalone_data
+

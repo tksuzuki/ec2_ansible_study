@@ -1,0 +1,14 @@
+---
+- name: Generate /etc/hosts file
+  local_action: template src=hosts.j2 dest=/etc/hosts
+  register: gen_hosts
+  changed_when: false
+  #check_mode: no
+- debug: var=gen_hosts
+
+- name: ec2 inventory list add /etc/hosts
+  local_action: script add-ip-and-hostname.py
+  register: add_inventory_to_local_hosts
+  changed_when: false
+  #check_mode: no
+- debug: var=add_inventory_to_local_hosts

@@ -1,0 +1,13 @@
+---
+# defaults file for mariadb
+
+mariadb_databases:
+  - name: sample_database
+    socket: /var/lib/mysql/mysqld.sock
+    config: '/etc/my.cnf.d/login.cnf'
+mariadb_users:
+  - name: john
+    socket: /var/lib/mysql/mysqld.sock
+    config: '/etc/my.cnf.d/login.cnf'
+    password: hogehoge
+    priv: '*.*:ALL,GRANT'
